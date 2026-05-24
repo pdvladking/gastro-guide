@@ -1,8 +1,10 @@
 'use client';
 import dishes from '@/data/menuData';
+import orders from '@/data/ordersData';
 import { useState } from 'react';
 
 export default function Orderpage() {
+  const [table, setTable] = useState('')
   const [selectedDish, setSelectedDish] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
@@ -10,9 +12,21 @@ export default function Orderpage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log({ dishes: selectedDish, quantity, notes });
-    setSubmitted(true);
-  };
+
+    const tableOrder = orders.find(o => o.table === parseInt(table))
+    if (tableOrder) {
+      tableOrder.items.push({ dish: selectedDish, quantity, notes, status: "Pending"});
+    } else {
+          orders.push({
+            table: parseInt(table),
+            items: [{ dish: selectedDish, quantity, notes, status: "Pending"}]
+          })
+        }
+        setSubmitted(true);
+        setSelectedDish('');
+        setQuantity(1);
+        setNotes('');
+  }
 
   return (
     <div className="p-6 max-w-lg mx-auto">
@@ -24,6 +38,18 @@ export default function Orderpage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Table Number */}
+          <div>
+            <label className='block text-gray-700 font-medium mb-2'>Table Number</label>
+            <input
+            type='number'
+            value={table}
+            onChange={(e) => setTable(e.target.value)}
+            className='w-full border rounded-md p-2'
+            required
+            />
+          </div>
           {/* Dish Selection */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">Select Dish</label>
