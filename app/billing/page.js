@@ -5,39 +5,46 @@ import dishes from "@/data/menuData";
 
 export default function BillingPage() {
   const [selectedTable, setSelectedTable] = useState("");
-  const [total, setTotal] = useState(null);
+  const [receipt, setReceipt] = useState(null);
 
   const calculateBill = () => {
     const tableOrder = orders.find(
       (o) => o.table === parseInt(selectedTable)
     );
     if (!tableOrder) {
-      setTotal(0);
+      setReceipt(null);
       return;
     }
 
-    const sum = tableOrder.items.reduce((acc, item) => {
+    const items = tableOrder.items.map((item) => {
       const dish = dishes.find((d) => d.name === item.dish);
-      const price = dish
-        ? parseInt(dish.price.replace("NPR ", ""))
-        : 0;
-      return acc + price * item.quantity;
-    }, 0);
+      const price = dish ? parseInt(dish.price.replace("NPR ", "")) : 0;
+      return {
+        ...item,
+        price,
+        subtotal: price * item.quantity,
+      };
+    });
 
-    setTotal(sum);
+    const total = items.reduce((acc, i) => acc + i.subtotal, 0);
+
+    setReceipt({ table: tableOrder.table, items, total });
   };
 
   const payNow = () => {
-    // Clear orders for this table
     const index = orders.findIndex(
       (o) => o.table === parseInt(selectedTable)
     );
     if (index !== -1) {
-      orders.splice(index, 1); // remove table from ordersData
+      orders.splice(index, 1);
     }
-    setTotal(null);
+    setReceipt(null);
     setSelectedTable("");
     alert(`Payment successful for Table ${selectedTable}!`);
+  };
+
+  const printReceipt = () => {
+    window.print();
   };
 
   return (
@@ -47,21 +54,14 @@ export default function BillingPage() {
       </h1>
 
       <div className="space-y-4">
-        {/* Table Selector */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Select Table
-          </label>
-          <input
-            type="number"
-            value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-            className="w-full border rounded-md p-2"
-            placeholder="Enter table number"
-          />
-        </div>
+        <input
+          type="number"
+          value={selectedTable}
+          onChange={(e) => setSelectedTable(e.target.value)}
+          className="w-full border rounded-md p-2"
+          placeholder="Enter table number"
+        />
 
-        {/* Calculate Button */}
         <button
           onClick={calculateBill}
           className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
@@ -69,26 +69,38 @@ export default function BillingPage() {
           Calculate Bill
         </button>
 
-        {/* Bill Display */}
-        {total !== null && (
-          <div className="bg-gray-100 p-4 rounded-md mt-4 space-y-2">
-            {total === 0 ? (
-              <p className="text-red-600">
-                No orders found for this table.
-              </p>
-            ) : (
-              <>
-                <p className="text-lg font-semibold text-gray-800">
-                  Total Bill: NPR {total}
-                </p>
-                <button
-                  onClick={payNow}
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                >
-                  Pay Now
-                </button>
-              </>
-            )}
+        {receipt && (
+          <div className="bg-gray-100 p-4 rounded-md mt-4 space-y-3 print:block">
+            <h2 className="text-xl font-semibold">
+              Receipt for Table {receipt.table}
+            </h2>
+            <ul className="divide-y divide-gray-300">
+              {receipt.items.map((item, i) => (
+                <li key={i} className="flex justify-between py-2">
+                  <span>
+                    {item.dish} × {item.quantity}
+                  </span>
+                  <span>NPR {item.subtotal}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-lg font-bold text-gray-800 mt-2">
+              Total: NPR {receipt.total}
+            </p>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={payNow}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              >
+                Pay Now
+              </button>
+              <button
+                onClick={printReceipt}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Print Receipt
+              </button>
+            </div>
           </div>
         )}
       </div>
