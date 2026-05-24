@@ -1,41 +1,97 @@
-'use client';
-import { useState } from 'react';
+"use client";
+import { useState } from "react";
+import orders from "@/data/ordersData";
+import dishes from "@/data/menuData";
 
 export default function BillingPage() {
-  const [orders] = useState([
-    { id: 1, dish: 'Chicken Momo', quantity: 2, price: 250 },
-    { id: 1, dish: 'Chicken Momo', quantity: 2, price: 250 },
-    { id: 1, dish: 'Chicken Momo', quantity: 2, price: 250 },
-  ]);
+  const [selectedTable, setSelectedTable] = useState("");
+  const [total, setTotal] = useState(null);
 
-  const total = orders.reduce((sum, o) => sum + o.quantity * o.price, 0);
+  const calculateBill = () => {
+    const tableOrder = orders.find(
+      (o) => o.table === parseInt(selectedTable)
+    );
+    if (!tableOrder) {
+      setTotal(0);
+      return;
+    }
+
+    const sum = tableOrder.items.reduce((acc, item) => {
+      const dish = dishes.find((d) => d.name === item.dish);
+      const price = dish
+        ? parseInt(dish.price.replace("NPR ", ""))
+        : 0;
+      return acc + price * item.quantity;
+    }, 0);
+
+    setTotal(sum);
+  };
+
+  const payNow = () => {
+    // Clear orders for this table
+    const index = orders.findIndex(
+      (o) => o.table === parseInt(selectedTable)
+    );
+    if (index !== -1) {
+      orders.splice(index, 1); // remove table from ordersData
+    }
+    setTotal(null);
+    setSelectedTable("");
+    alert(`Payment successful for Table ${selectedTable}!`);
+  };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-purple-600 mb-6">Billing</h1>
+    <div className="p-6 max-w-lg mx-auto">
+      <h1 className="text-3xl font-bold text-purple-600 mb-6">
+        Billing Page 💳
+      </h1>
 
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">Dish</th>
-            <th className="border p-2">Qty</th>
-            <th className="border p-2">Price</th>
-            <th className="border p-2">Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((o) => (
-            <tr key={o.id}>
-              <td className="border p-2">{o.dish}</td>
-              <td className="border p-2">{o.quantity}</td>
-              <td className="border p-2">NPR{o.price}</td>
-              <td className="border p-2">NPR{o.quantity * o.price}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="space-y-4">
+        {/* Table Selector */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">
+            Select Table
+          </label>
+          <input
+            type="number"
+            value={selectedTable}
+            onChange={(e) => setSelectedTable(e.target.value)}
+            className="w-full border rounded-md p-2"
+            placeholder="Enter table number"
+          />
+        </div>
 
-      <div className="mt-4 text-right font-bold text-xl">Total: NPR {total}</div>
+        {/* Calculate Button */}
+        <button
+          onClick={calculateBill}
+          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+        >
+          Calculate Bill
+        </button>
+
+        {/* Bill Display */}
+        {total !== null && (
+          <div className="bg-gray-100 p-4 rounded-md mt-4 space-y-2">
+            {total === 0 ? (
+              <p className="text-red-600">
+                No orders found for this table.
+              </p>
+            ) : (
+              <>
+                <p className="text-lg font-semibold text-gray-800">
+                  Total Bill: NPR {total}
+                </p>
+                <button
+                  onClick={payNow}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                >
+                  Pay Now
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
