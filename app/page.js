@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-linear-to-br from-yellow-50 to-orange-100 flex flex-col items-center justify-center p-6">
       <h1 className="text-4xl font-bold text-orange-700 mb-8">
         🍽️ Restaurant POS System
       </h1>
